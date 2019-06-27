@@ -1,0 +1,46 @@
+#!ipxe
+
+:logon
+login || goto logon
+iseq ${username} erik && iseq ${password} 12345 && goto start ||
+goto logon
+
+:start
+menu Please choose an operating system to install
+item --gap          Windows
+item wimboot        LiteTouchPE_x64
+item --gap          Linux
+item archlinux      Arch Linux
+item --gap          iPXE Shell
+item shell          Drop to iPXE shell
+
+choose target && goto ${target}
+
+:shell
+echo Type 'exit' to get the back to the menu
+shell
+set menu-timeout 0
+set submenu-timeout 0
+goto start
+
+:wimboot
+kernel wimboot
+initrd win10ltsc/64/BCD                                     BCD
+initrd win10ltsc/64/boot.sdi                                boot.sdi
+initrd -n boot.wim win10ltsc/64/LiteTouchPE_x64.wim         boot.wim
+boot
+
+:archlinux
+kernel      arch/vmlinuz
+initrd      arch/intel_ucode.img
+initrd      arch/amd_ucode.img
+initrd      arch/archiso.img
+imgargs     vmlinuz \
+            initrd=intel_ucode.img \
+            initrd=amd_ucode.img \
+            initrd=archiso.img \
+            archiso_http_srv=http://192.168.10.31/files/arch/iso/ \
+            archisobasedir=arch \
+            ip=dhcp \
+            net.ifnames=0
+boot
